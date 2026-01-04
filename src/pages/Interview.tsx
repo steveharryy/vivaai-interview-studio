@@ -17,15 +17,18 @@ import {
   Loader2,
   Brain,
   Zap,
-  MessageSquare
+  MessageSquare,
+  AlertCircle
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
+import { evaluateAnswer, type EvaluationResponse } from "@/lib/evaluateAnswer";
 
 interface Message {
   id: string;
   role: "ai" | "user";
   content: string;
+  evaluation?: EvaluationResponse;
   feedback?: {
     score: number;
     strengths: string[];
@@ -187,6 +190,7 @@ export default function Interview() {
     };
 
     setMessages((prev) => [...prev, userMessage]);
+    const currentAnswer = input.trim();
     setInput("");
     setIsLoading(true);
 
@@ -196,17 +200,44 @@ export default function Interview() {
       setIsListening(false);
     }
 
-    // Simulate AI response with feedback
-    setTimeout(() => {
-      const score = Math.floor(Math.random() * 30) + 70;
+    try {
+      // Call the real AI evaluation endpoint
+      const evaluation = await evaluateAnswer({
+        interviewType: `${mode} interview`,
+        currentQuestion: sampleQuestions[currentQuestionIndex],
+        candidateAnswer: currentAnswer,
+      });
+
+      console.log('AI Evaluation:', evaluation);
+
+      // Generate feedback based on AI evaluation
+      const getStrengths = (eval_: EvaluationResponse): string[] => {
+        const strengths: string[] = [];
+        if (eval_.confidence === 'high') strengths.push('Confident delivery');
+        if (!eval_.hesitation) strengths.push('Clear and direct response');
+        if (eval_.score >= 7) strengths.push('Strong content relevance');
+        if (eval_.score >= 8) strengths.push('Excellent structure');
+        return strengths.length > 0 ? strengths : ['Completed the response'];
+      };
+
+      const getImprovements = (eval_: EvaluationResponse): string[] => {
+        const improvements: string[] = [];
+        if (eval_.confidence === 'low') improvements.push('Build more confidence in delivery');
+        if (eval_.hesitation) improvements.push('Reduce filler words and hesitations');
+        if (eval_.score < 7) improvements.push('Add more specific examples');
+        if (eval_.score < 6) improvements.push('Focus on answering the question directly');
+        return improvements.length > 0 ? improvements : ['Continue practicing'];
+      };
+
       const feedback: Message = {
         id: (Date.now() + 1).toString(),
         role: "ai",
-        content: generateFeedback(score),
+        content: evaluation.summary,
+        evaluation,
         feedback: {
-          score,
-          strengths: ["Clear communication", "Good structure"],
-          improvements: ["Add more specific examples", "Be more concise"],
+          score: evaluation.score * 10, // Convert 1-10 to percentage-like display
+          strengths: getStrengths(evaluation),
+          improvements: getImprovements(evaluation),
         },
       };
 
@@ -214,7 +245,7 @@ export default function Interview() {
 
       // Speak feedback for voice/video modes
       if ((mode === "voice" || mode === "video") && 'speechSynthesis' in window) {
-        const utterance = new SpeechSynthesisUtterance(generateFeedback(score));
+        const utterance = new SpeechSynthesisUtterance(evaluation.summary);
         utterance.rate = 0.9;
         speechSynthesis.speak(utterance);
       }
@@ -248,9 +279,16 @@ export default function Interview() {
           setMessages((prev) => [...prev, completion]);
         }, 2000);
       }
-
+    } catch (error) {
+      console.error('Evaluation error:', error);
+      toast({
+        title: "Evaluation Error",
+        description: error instanceof Error ? error.message : "Failed to evaluate your answer. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
       setIsLoading(false);
-    }, 2000);
+    }
   };
 
   const generateFeedback = (score: number) => {
@@ -395,16 +433,36 @@ export default function Interview() {
                       
                       {message.feedback && (
                         <div className="mt-4 glass-card p-5 rounded-2xl border-primary/20">
-                          <div className="flex items-center gap-3 mb-4">
-                            <div className={cn(
-                              "font-display text-3xl font-bold",
-                              message.feedback.score >= 80 && "text-success",
-                              message.feedback.score >= 60 && message.feedback.score < 80 && "text-warning",
-                              message.feedback.score < 60 && "text-destructive"
-                            )}>
-                              {message.feedback.score}%
+                          <div className="flex items-center justify-between mb-4">
+                            <div className="flex items-center gap-3">
+                              <div className={cn(
+                                "font-display text-3xl font-bold",
+                                message.feedback.score >= 80 && "text-success",
+                                message.feedback.score >= 60 && message.feedback.score < 80 && "text-warning",
+                                message.feedback.score < 60 && "text-destructive"
+                              )}>
+                                {message.feedback.score}%
+                              </div>
+                              <span className="text-sm text-muted-foreground">Your Score</span>
                             </div>
-                            <span className="text-sm text-muted-foreground">Your Score</span>
+                            {message.evaluation && (
+                              <div className="flex items-center gap-2">
+                                <span className={cn(
+                                  "px-2 py-1 rounded-lg text-xs font-medium",
+                                  message.evaluation.confidence === 'high' && "bg-success/20 text-success",
+                                  message.evaluation.confidence === 'medium' && "bg-warning/20 text-warning",
+                                  message.evaluation.confidence === 'low' && "bg-destructive/20 text-destructive"
+                                )}>
+                                  {message.evaluation.confidence.toUpperCase()} confidence
+                                </span>
+                                {message.evaluation.hesitation && (
+                                  <span className="px-2 py-1 rounded-lg text-xs font-medium bg-accent/20 text-accent flex items-center gap-1">
+                                    <AlertCircle className="w-3 h-3" />
+                                    Hesitation detected
+                                  </span>
+                                )}
+                              </div>
+                            )}
                           </div>
                           <div className="space-y-2 text-sm">
                             {message.feedback.strengths.map((s, i) => (
