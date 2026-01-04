@@ -14,7 +14,42 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      interviews: {
+        Row: {
+          answer_length: number
+          confidence: string
+          created_at: string
+          difficulty: string
+          hesitation: boolean
+          id: string
+          interview_type: string
+          score: number
+          user_id: string
+        }
+        Insert: {
+          answer_length?: number
+          confidence: string
+          created_at?: string
+          difficulty: string
+          hesitation?: boolean
+          id?: string
+          interview_type: string
+          score: number
+          user_id: string
+        }
+        Update: {
+          answer_length?: number
+          confidence?: string
+          created_at?: string
+          difficulty?: string
+          hesitation?: boolean
+          id?: string
+          interview_type?: string
+          score?: number
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
