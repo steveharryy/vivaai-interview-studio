@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { Sparkles, Github, Twitter, Linkedin } from "lucide-react";
+import { Github, Twitter, Linkedin } from "lucide-react";
 
 const footerLinks = {
   product: [
@@ -26,43 +26,31 @@ const socialLinks = [
 
 export function Footer() {
   return (
-    <footer className="border-t border-border/50 bg-card/30">
-      <div className="container mx-auto px-4 py-12">
+    <footer className="border-t border-border/40 py-12">
+      <div className="container mx-auto px-4">
         <div className="grid grid-cols-2 md:grid-cols-4 gap-8 mb-12">
           {/* Brand */}
           <div className="col-span-2 md:col-span-1">
             <Link to="/" className="flex items-center gap-2 mb-4">
-              <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-primary to-accent flex items-center justify-center">
-                <Sparkles className="w-4 h-4 text-primary-foreground" />
+              <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center">
+                <span className="text-primary-foreground font-bold text-sm">V</span>
               </div>
-              <span className="text-lg font-bold">VivaAI</span>
+              <span className="font-medium text-lg">VivaAI</span>
             </Link>
-            <p className="text-sm text-muted-foreground mb-4">
-              AI-powered interview preparation platform to help you land your dream job.
+            <p className="text-sm text-muted-foreground max-w-xs">
+              AI-powered interview practice that adapts to help you succeed.
             </p>
-            <div className="flex gap-3">
-              {socialLinks.map((social) => (
-                <a
-                  key={social.label}
-                  href={social.href}
-                  className="w-9 h-9 rounded-lg bg-secondary/50 flex items-center justify-center hover:bg-primary/20 hover:text-primary transition-colors"
-                  aria-label={social.label}
-                >
-                  <social.icon className="w-4 h-4" />
-                </a>
-              ))}
-            </div>
           </div>
 
           {/* Links */}
           <div>
-            <h4 className="font-semibold mb-4">Product</h4>
-            <ul className="space-y-2">
+            <p className="font-medium text-sm mb-4">Product</p>
+            <ul className="space-y-2.5">
               {footerLinks.product.map((link) => (
                 <li key={link.label}>
                   <Link
                     to={link.href}
-                    className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+                    className="text-sm text-muted-foreground hover:text-foreground transition-colors link-underline"
                   >
                     {link.label}
                   </Link>
@@ -72,13 +60,13 @@ export function Footer() {
           </div>
 
           <div>
-            <h4 className="font-semibold mb-4">Company</h4>
-            <ul className="space-y-2">
+            <p className="font-medium text-sm mb-4">Company</p>
+            <ul className="space-y-2.5">
               {footerLinks.company.map((link) => (
                 <li key={link.label}>
                   <Link
                     to={link.href}
-                    className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+                    className="text-sm text-muted-foreground hover:text-foreground transition-colors link-underline"
                   >
                     {link.label}
                   </Link>
@@ -88,13 +76,13 @@ export function Footer() {
           </div>
 
           <div>
-            <h4 className="font-semibold mb-4">Legal</h4>
-            <ul className="space-y-2">
+            <p className="font-medium text-sm mb-4">Legal</p>
+            <ul className="space-y-2.5">
               {footerLinks.legal.map((link) => (
                 <li key={link.label}>
                   <Link
                     to={link.href}
-                    className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+                    className="text-sm text-muted-foreground hover:text-foreground transition-colors link-underline"
                   >
                     {link.label}
                   </Link>
@@ -105,13 +93,22 @@ export function Footer() {
         </div>
 
         {/* Bottom */}
-        <div className="pt-8 border-t border-border/50 flex flex-col sm:flex-row items-center justify-between gap-4">
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-8 border-t border-border/40">
           <p className="text-sm text-muted-foreground">
             © {new Date().getFullYear()} VivaAI. All rights reserved.
           </p>
-          <p className="text-sm text-muted-foreground">
-            Made with ❤️ for job seekers everywhere
-          </p>
+          <div className="flex items-center gap-4">
+            {socialLinks.map((social) => (
+              <a 
+                key={social.label}
+                href={social.href} 
+                className="text-muted-foreground hover:text-foreground transition-colors"
+                aria-label={social.label}
+              >
+                <social.icon className="w-5 h-5" />
+              </a>
+            ))}
+          </div>
         </div>
       </div>
     </footer>

@@ -1,44 +1,53 @@
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { ArrowRight, Sparkles } from "lucide-react";
+import { ArrowRight } from "lucide-react";
 
 export function CTASection() {
   return (
     <section className="py-24 relative overflow-hidden">
-      {/* Background Effects */}
-      <div className="absolute inset-0 bg-gradient-to-br from-primary/10 via-transparent to-accent/10" />
-      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-primary/20 rounded-full blur-[150px]" />
+      {/* Background */}
+      <div className="absolute inset-0 bg-gradient-to-b from-transparent via-primary/5 to-transparent" />
+      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[400px] bg-primary/10 blob-shape blur-3xl" />
 
       <div className="container mx-auto px-4 relative z-10">
-        <div className="max-w-4xl mx-auto text-center">
-          {/* Icon */}
-          <div className="w-16 h-16 mx-auto mb-8 rounded-2xl bg-gradient-to-br from-primary to-accent flex items-center justify-center animate-float">
-            <Sparkles className="w-8 h-8 text-primary-foreground" />
-          </div>
-
-          {/* Headline */}
-          <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold mb-6">
-            Ready to Ace Your{" "}
-            <span className="gradient-text">Next Interview?</span>
+        <div className="max-w-2xl mx-auto text-center">
+          <h2 
+            className="text-3xl sm:text-4xl lg:text-5xl font-medium leading-tight mb-6 animate-fade-in-up"
+          >
+            Ready to ace{" "}
+            <span className="font-editorial italic text-primary">your next interview?</span>
           </h2>
 
-          {/* Description */}
-          <p className="text-lg text-muted-foreground max-w-2xl mx-auto mb-10">
-            Join thousands of candidates who have improved their interview skills 
-            and landed their dream jobs with VivaAI.
+          <p 
+            className="text-muted-foreground text-lg max-w-md mx-auto mb-8 animate-fade-in-up"
+            style={{ animationDelay: "0.1s" }}
+          >
+            Join thousands who've improved their interview skills. 
+            Start practicing for free today.
           </p>
 
-          {/* CTA */}
-          <Link to="/auth?mode=signup">
-            <Button variant="hero" size="xl" className="group">
-              Start Free Today
-              <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
-            </Button>
-          </Link>
+          <div 
+            className="flex flex-col sm:flex-row items-center justify-center gap-3 animate-fade-in-up"
+            style={{ animationDelay: "0.2s" }}
+          >
+            <Link to="/practice">
+              <Button size="lg" className="group gap-2 rounded-full px-8">
+                Start free practice
+                <ArrowRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
+              </Button>
+            </Link>
+            <Link to="/auth">
+              <Button variant="ghost" size="lg" className="rounded-full text-muted-foreground hover:text-foreground">
+                Sign in
+              </Button>
+            </Link>
+          </div>
 
-          {/* Trust Badge */}
-          <p className="mt-6 text-sm text-muted-foreground">
-            No credit card required • Free forever plan available
+          <p 
+            className="mt-6 text-sm text-muted-foreground animate-fade-in-up"
+            style={{ animationDelay: "0.3s" }}
+          >
+            No credit card required · Free plan available
           </p>
         </div>
       </div>

@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Menu, X, Sparkles, Zap } from "lucide-react";
+import { Menu, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const navLinks = [
@@ -16,17 +16,15 @@ export function Navbar() {
   const location = useLocation();
 
   return (
-    <nav className="fixed top-0 left-0 right-0 z-50 bg-background/60 backdrop-blur-2xl border-b border-border/30">
+    <nav className="fixed top-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-xl border-b border-border/40">
       <div className="container mx-auto px-4">
-        <div className="flex items-center justify-between h-16">
+        <div className="flex items-center justify-between h-14">
           {/* Logo */}
-          <Link to="/" className="flex items-center gap-3 group">
-            <div className="relative">
-              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary to-accent flex items-center justify-center neon-glow">
-                <Sparkles className="w-5 h-5 text-primary-foreground" />
-              </div>
+          <Link to="/" className="flex items-center gap-2 group">
+            <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center">
+              <span className="text-primary-foreground font-bold text-sm">V</span>
             </div>
-            <span className="font-display text-xl font-bold gradient-text">VivaAI</span>
+            <span className="font-medium text-lg">VivaAI</span>
           </Link>
 
           {/* Desktop Navigation */}
@@ -36,9 +34,9 @@ export function Navbar() {
                 key={link.href}
                 to={link.href}
                 className={cn(
-                  "px-4 py-2 rounded-xl text-sm font-medium transition-all duration-300",
+                  "px-3 py-1.5 rounded-lg text-sm transition-colors",
                   location.pathname === link.href
-                    ? "text-primary bg-primary/10"
+                    ? "text-foreground bg-secondary"
                     : "text-muted-foreground hover:text-foreground hover:bg-secondary/50"
                 )}
               >
@@ -48,16 +46,15 @@ export function Navbar() {
           </div>
 
           {/* Desktop CTA */}
-          <div className="hidden md:flex items-center gap-3">
+          <div className="hidden md:flex items-center gap-2">
             <Link to="/auth">
-              <Button variant="ghost" size="sm" className="rounded-xl">
-                Sign In
+              <Button variant="ghost" size="sm" className="rounded-lg text-muted-foreground hover:text-foreground">
+                Sign in
               </Button>
             </Link>
             <Link to="/auth?mode=signup">
-              <Button variant="hero" size="sm" className="rounded-xl">
-                <Zap className="w-4 h-4 mr-1" />
-                Get Started
+              <Button size="sm" className="rounded-lg">
+                Get started
               </Button>
             </Link>
           </div>
@@ -65,7 +62,7 @@ export function Navbar() {
           {/* Mobile Menu Button */}
           <button
             onClick={() => setIsOpen(!isOpen)}
-            className="md:hidden p-2 rounded-xl hover:bg-secondary/50 transition-colors"
+            className="md:hidden p-2 -mr-2 rounded-lg hover:bg-secondary/50 transition-colors"
           >
             {isOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
           </button>
@@ -73,33 +70,32 @@ export function Navbar() {
 
         {/* Mobile Navigation */}
         {isOpen && (
-          <div className="md:hidden py-4 border-t border-border/30 animate-fade-in">
-            <div className="flex flex-col gap-2">
+          <div className="md:hidden py-4 border-t border-border/40 animate-fade-in-up">
+            <div className="flex flex-col gap-1">
               {navLinks.map((link) => (
                 <Link
                   key={link.href}
                   to={link.href}
                   onClick={() => setIsOpen(false)}
                   className={cn(
-                    "px-4 py-3 rounded-xl text-sm font-medium transition-colors",
+                    "px-3 py-2.5 rounded-lg text-sm transition-colors",
                     location.pathname === link.href
-                      ? "text-primary bg-primary/10"
+                      ? "text-foreground bg-secondary"
                       : "text-muted-foreground hover:text-foreground hover:bg-secondary/50"
                   )}
                 >
                   {link.label}
                 </Link>
               ))}
-              <div className="flex flex-col gap-2 pt-4 border-t border-border/30 mt-2">
+              <div className="flex flex-col gap-2 pt-4 mt-2 border-t border-border/40">
                 <Link to="/auth" onClick={() => setIsOpen(false)}>
-                  <Button variant="ghost" className="w-full justify-center rounded-xl">
-                    Sign In
+                  <Button variant="ghost" className="w-full justify-center rounded-lg">
+                    Sign in
                   </Button>
                 </Link>
                 <Link to="/auth?mode=signup" onClick={() => setIsOpen(false)}>
-                  <Button variant="hero" className="w-full justify-center rounded-xl">
-                    <Zap className="w-4 h-4 mr-1" />
-                    Get Started
+                  <Button className="w-full justify-center rounded-lg">
+                    Get started
                   </Button>
                 </Link>
               </div>

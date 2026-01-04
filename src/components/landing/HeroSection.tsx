@@ -1,103 +1,157 @@
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { ArrowRight, Play, Sparkles, Mic, Video, MessageSquare, Zap } from "lucide-react";
+import { ArrowRight, Play, MessageSquare, Mic, Video } from "lucide-react";
 
 export function HeroSection() {
   return (
-    <section className="relative min-h-screen flex items-center justify-center overflow-hidden pt-16">
-      {/* Background Effects */}
-      <div className="absolute inset-0 bg-mesh" />
-      
-      {/* Animated Blobs */}
-      <div className="blob top-20 left-20 w-80 h-80 bg-primary/30" />
-      <div className="blob bottom-20 right-20 w-96 h-96 bg-accent/30" style={{ animationDelay: "2s" }} />
-      <div className="blob top-1/2 left-1/2 w-64 h-64 bg-purple-500/20" style={{ animationDelay: "4s" }} />
-      
-      {/* Grid Pattern */}
-      <div className="absolute inset-0 bg-[linear-gradient(hsl(var(--border)/0.2)_1px,transparent_1px),linear-gradient(90deg,hsl(var(--border)/0.2)_1px,transparent_1px)] bg-[size:80px_80px] [mask-image:radial-gradient(ellipse_at_center,black_20%,transparent_75%)]" />
+    <section className="relative min-h-[90vh] flex items-center pt-20 pb-16 overflow-hidden">
+      {/* Subtle background elements */}
+      <div className="absolute inset-0 bg-gradient-to-b from-card/30 via-transparent to-transparent" />
+      <div className="absolute top-32 right-[15%] w-[400px] h-[400px] bg-primary/8 blob-shape blur-3xl" />
+      <div className="absolute bottom-20 left-[10%] w-[300px] h-[300px] bg-accent/6 blob-shape blur-3xl" style={{ animationDelay: "3s" }} />
 
       <div className="container mx-auto px-4 relative z-10">
-        <div className="max-w-5xl mx-auto text-center">
-          {/* Badge */}
-          <div className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-primary/10 border border-primary/30 text-primary text-sm font-medium mb-8 animate-fade-in animate-bounce-subtle">
-            <Zap className="w-4 h-4" />
-            <span>Powered by Advanced AI • Join 50,000+ Students</span>
-          </div>
+        <div className="grid lg:grid-cols-2 gap-12 lg:gap-8 items-center">
+          {/* Left column - Text content */}
+          <div className="max-w-xl">
+            {/* Tag */}
+            <div className="tag mb-6 animate-fade-in-up">
+              <span className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
+              Now with adaptive AI
+            </div>
 
-          {/* Headline */}
-          <h1 className="font-display text-5xl sm:text-6xl md:text-7xl lg:text-8xl font-bold mb-8 animate-fade-in-up leading-[1.1]" style={{ animationDelay: "0.1s" }}>
-            Nail Every Interview
-            <br />
-            <span className="neon-text">Like a Pro</span>
-          </h1>
+            {/* Headline - Editorial style */}
+            <h1 className="animate-fade-in-up" style={{ animationDelay: "0.1s" }}>
+              <span className="block text-4xl sm:text-5xl lg:text-6xl font-medium leading-[1.1] mb-2">
+                Practice interviews
+              </span>
+              <span className="block font-editorial text-5xl sm:text-6xl lg:text-7xl text-primary italic">
+                that actually help
+              </span>
+            </h1>
 
-          {/* Subheadline */}
-          <p className="text-xl sm:text-2xl text-muted-foreground max-w-2xl mx-auto mb-12 animate-fade-in-up font-light" style={{ animationDelay: "0.2s" }}>
-            Practice with AI that adapts to you. Get real-time feedback,
-            boost your confidence, and land your dream job.
-          </p>
+            {/* Subheadline */}
+            <p 
+              className="mt-6 text-lg text-muted-foreground leading-relaxed max-w-md animate-fade-in-up"
+              style={{ animationDelay: "0.2s" }}
+            >
+              AI-powered mock interviews that adapt to your skill level. 
+              Get real feedback, track your progress, and walk into your 
+              next interview with confidence.
+            </p>
 
-          {/* CTA Buttons */}
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-16 animate-fade-in-up" style={{ animationDelay: "0.3s" }}>
-            <Link to="/practice">
-              <Button variant="hero" size="xl" className="group text-lg px-10 py-7 neon-glow">
-                Start Free Practice
-                <ArrowRight className="w-5 h-5 group-hover:translate-x-2 transition-transform" />
-              </Button>
-            </Link>
-            <Button variant="glass" size="xl" className="group text-lg px-8 py-7">
-              <Play className="w-5 h-5 group-hover:scale-110 transition-transform" />
-              Watch Demo
-            </Button>
-          </div>
-
-          {/* Feature Pills */}
-          <div className="flex flex-wrap items-center justify-center gap-4 animate-fade-in-up" style={{ animationDelay: "0.4s" }}>
-            {[
-              { icon: MessageSquare, label: "Text Interview", gradient: "from-cyan-400 to-teal-400" },
-              { icon: Mic, label: "Voice Interview", gradient: "from-orange-400 to-rose-400" },
-              { icon: Video, label: "Video Interview", gradient: "from-violet-400 to-purple-400" },
-            ].map((feature) => (
-              <Link
-                key={feature.label}
-                to="/practice"
-                className="group flex items-center gap-3 px-6 py-3 rounded-full bg-secondary/50 border border-border/50 hover:border-primary/50 hover:bg-secondary/80 transition-all duration-300"
-              >
-                <div className={`w-8 h-8 rounded-lg bg-gradient-to-br ${feature.gradient} flex items-center justify-center`}>
-                  <feature.icon className="w-4 h-4 text-white" />
-                </div>
-                <span className="font-medium">{feature.label}</span>
+            {/* CTA Buttons */}
+            <div 
+              className="flex flex-wrap items-center gap-3 mt-8 animate-fade-in-up"
+              style={{ animationDelay: "0.3s" }}
+            >
+              <Link to="/practice">
+                <Button size="lg" className="group gap-2 rounded-full px-6">
+                  Start practicing
+                  <ArrowRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
+                </Button>
               </Link>
-            ))}
-          </div>
-        </div>
+              <Button variant="ghost" size="lg" className="gap-2 rounded-full text-muted-foreground hover:text-foreground">
+                <Play className="w-4 h-4" />
+                Watch demo
+              </Button>
+            </div>
 
-        {/* Hero Visual */}
-        <div className="mt-20 max-w-5xl mx-auto animate-fade-in-up" style={{ animationDelay: "0.5s" }}>
-          <div className="relative">
-            {/* Glow Effect */}
-            <div className="absolute inset-0 bg-gradient-to-r from-primary/40 via-accent/40 to-primary/40 rounded-3xl blur-3xl opacity-50 animate-pulse-slow" />
-            
-            {/* Main Card */}
-            <div className="relative glass-card p-2 rounded-3xl overflow-hidden">
-              <div className="bg-gradient-to-br from-card via-card to-secondary/20 rounded-2xl p-8 sm:p-12 min-h-[350px] sm:min-h-[450px] flex items-center justify-center">
-                <div className="text-center">
-                  <div className="relative inline-block mb-8">
-                    <div className="w-24 h-24 rounded-3xl bg-gradient-to-br from-primary via-accent to-primary flex items-center justify-center animate-float neon-glow">
-                      <Sparkles className="w-12 h-12 text-primary-foreground" />
+            {/* Social proof */}
+            <div 
+              className="flex items-center gap-4 mt-10 pt-8 border-t border-border/50 animate-fade-in-up"
+              style={{ animationDelay: "0.4s" }}
+            >
+              <div className="flex -space-x-2">
+                {[1, 2, 3, 4].map((i) => (
+                  <div 
+                    key={i} 
+                    className="w-8 h-8 rounded-full bg-secondary border-2 border-background flex items-center justify-center text-xs font-medium text-muted-foreground"
+                  >
+                    {String.fromCharCode(64 + i)}
+                  </div>
+                ))}
+              </div>
+              <p className="text-sm text-muted-foreground">
+                <span className="text-foreground font-medium">2,400+</span> interviews completed this week
+              </p>
+            </div>
+          </div>
+
+          {/* Right column - Visual */}
+          <div 
+            className="relative lg:pl-8 animate-fade-in-up"
+            style={{ animationDelay: "0.3s" }}
+          >
+            {/* Main interview card mockup */}
+            <div className="relative">
+              {/* Glow behind */}
+              <div className="absolute inset-4 bg-primary/15 rounded-3xl blur-2xl" />
+              
+              {/* Card */}
+              <div className="relative bg-card border border-border/60 rounded-2xl p-6 shadow-lg">
+                {/* Header */}
+                <div className="flex items-center justify-between mb-6">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
+                      <MessageSquare className="w-5 h-5 text-primary" />
                     </div>
-                    {/* Orbiting Elements */}
-                    <div className="absolute -top-2 -right-2 w-8 h-8 rounded-lg bg-cyan-400 flex items-center justify-center animate-bounce-subtle">
-                      <MessageSquare className="w-4 h-4 text-white" />
-                    </div>
-                    <div className="absolute -bottom-2 -left-2 w-8 h-8 rounded-lg bg-orange-400 flex items-center justify-center animate-bounce-subtle" style={{ animationDelay: "0.5s" }}>
-                      <Mic className="w-4 h-4 text-white" />
+                    <div>
+                      <p className="font-medium text-sm">Technical Interview</p>
+                      <p className="text-xs text-muted-foreground">Question 3 of 5</p>
                     </div>
                   </div>
-                  <h3 className="font-display text-2xl font-bold mb-3">Interactive AI Interviewer</h3>
-                  <p className="text-muted-foreground max-w-md mx-auto">
-                    Experience realistic interviews with our adaptive AI that learns your strengths and helps you improve
+                  <div className="tag-warm text-[10px]">Medium</div>
+                </div>
+
+                {/* Question */}
+                <div className="bg-secondary/50 rounded-xl p-4 mb-4">
+                  <p className="text-sm leading-relaxed">
+                    "Tell me about a time when you had to solve a complex 
+                    problem with limited resources. How did you approach it?"
                   </p>
+                </div>
+
+                {/* Answer area mockup */}
+                <div className="border border-border/60 rounded-xl p-4 min-h-[100px]">
+                  <p className="text-sm text-muted-foreground">
+                    In my previous role, we faced a situation where...
+                    <span className="inline-block w-1.5 h-4 bg-primary/60 ml-0.5 animate-pulse" />
+                  </p>
+                </div>
+
+                {/* Footer */}
+                <div className="flex items-center justify-between mt-4 pt-4 border-t border-border/50">
+                  <div className="flex items-center gap-2">
+                    <div className="w-2 h-2 rounded-full bg-success animate-pulse" />
+                    <span className="text-xs text-muted-foreground">AI is listening</span>
+                  </div>
+                  <div className="flex gap-1">
+                    <div className="w-8 h-8 rounded-lg bg-secondary flex items-center justify-center">
+                      <Mic className="w-4 h-4 text-muted-foreground" />
+                    </div>
+                    <div className="w-8 h-8 rounded-lg bg-secondary flex items-center justify-center">
+                      <Video className="w-4 h-4 text-muted-foreground" />
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Floating feedback card */}
+              <div 
+                className="absolute -right-4 -bottom-4 lg:-right-8 lg:-bottom-6 bg-card border border-border/60 rounded-xl p-4 shadow-lg max-w-[200px] animate-float-gentle"
+                style={{ animationDelay: "1s" }}
+              >
+                <div className="flex items-start gap-2">
+                  <div className="w-6 h-6 rounded-full bg-success/10 flex items-center justify-center shrink-0 mt-0.5">
+                    <span className="text-success text-xs">✓</span>
+                  </div>
+                  <div>
+                    <p className="text-xs font-medium mb-0.5">Strong answer</p>
+                    <p className="text-[10px] text-muted-foreground leading-relaxed">
+                      Good use of STAR method. Consider adding metrics.
+                    </p>
+                  </div>
                 </div>
               </div>
             </div>

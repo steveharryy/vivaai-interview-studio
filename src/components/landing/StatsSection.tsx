@@ -1,27 +1,30 @@
 const stats = [
-  { value: "50K+", label: "Interviews Completed" },
-  { value: "92%", label: "Success Rate" },
-  { value: "4.9/5", label: "User Rating" },
-  { value: "200+", label: "Companies Covered" },
+  { value: "50k+", label: "Practice sessions", detail: "completed" },
+  { value: "92%", label: "Success rate", detail: "after 10 sessions" },
+  { value: "4.9", label: "User rating", detail: "out of 5" },
+  { value: "3min", label: "Avg feedback", detail: "turnaround" },
 ];
 
 export function StatsSection() {
   return (
-    <section className="py-16 border-y border-border/50">
+    <section className="py-16 border-y border-border/40">
       <div className="container mx-auto px-4">
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-8">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-8 lg:gap-4">
           {stats.map((stat, index) => (
             <div
               key={stat.label}
-              className="text-center animate-fade-in-up"
+              className="text-center lg:text-left animate-fade-in-up"
               style={{ animationDelay: `${index * 0.1}s` }}
             >
-              <div className="text-3xl sm:text-4xl md:text-5xl font-bold gradient-text mb-2">
+              <p className="stat-number gradient-text mb-1">
                 {stat.value}
-              </div>
-              <div className="text-sm sm:text-base text-muted-foreground">
+              </p>
+              <p className="text-sm font-medium text-foreground">
                 {stat.label}
-              </div>
+              </p>
+              <p className="text-xs text-muted-foreground">
+                {stat.detail}
+              </p>
             </div>
           ))}
         </div>
