@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { useParams, useNavigate, Link } from "react-router-dom";
+import { useParams, Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { 
@@ -15,7 +15,9 @@ import {
   CheckCircle2,
   XCircle,
   Loader2,
-  Brain
+  Brain,
+  Zap,
+  MessageSquare
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
@@ -41,7 +43,6 @@ const sampleQuestions = [
 
 export default function Interview() {
   const { mode } = useParams<{ mode: string }>();
-  const navigate = useNavigate();
   const { toast } = useToast();
   
   const [messages, setMessages] = useState<Message[]>([]);
@@ -52,9 +53,11 @@ export default function Interview() {
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [interviewStarted, setInterviewStarted] = useState(false);
   const [timeElapsed, setTimeElapsed] = useState(0);
+  const [isListening, setIsListening] = useState(false);
   
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
+  const recognitionRef = useRef<any>(null);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -69,6 +72,41 @@ export default function Interview() {
     }
     return () => clearInterval(interval);
   }, [interviewStarted]);
+
+  // Initialize Speech Recognition for voice mode
+  useEffect(() => {
+    if ((mode === "voice" || mode === "video") && 'webkitSpeechRecognition' in window) {
+      const SpeechRecognitionAPI = (window as any).webkitSpeechRecognition;
+      recognitionRef.current = new SpeechRecognitionAPI();
+      if (recognitionRef.current) {
+        recognitionRef.current.continuous = true;
+        recognitionRef.current.interimResults = true;
+        
+        recognitionRef.current.onresult = (event: any) => {
+          let finalTranscript = '';
+          for (let i = event.resultIndex; i < event.results.length; i++) {
+            if (event.results[i].isFinal) {
+              finalTranscript += event.results[i][0].transcript;
+            }
+          }
+          if (finalTranscript) {
+            setInput(prev => prev + ' ' + finalTranscript);
+          }
+        };
+
+        recognitionRef.current.onerror = (event: any) => {
+          console.error('Speech recognition error:', event.error);
+          setIsListening(false);
+        };
+      }
+    }
+
+    return () => {
+      if (recognitionRef.current) {
+        recognitionRef.current.stop();
+      }
+    };
+  }, [mode]);
 
   const formatTime = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
@@ -87,6 +125,13 @@ export default function Interview() {
     
     if (mode === "video") {
       startVideo();
+    }
+
+    // Speak the first question
+    if ((mode === "voice" || mode === "video") && 'speechSynthesis' in window) {
+      const utterance = new SpeechSynthesisUtterance(sampleQuestions[0]);
+      utterance.rate = 0.9;
+      speechSynthesis.speak(utterance);
     }
   };
 
@@ -108,11 +153,27 @@ export default function Interview() {
   };
 
   const toggleMic = () => {
-    setIsMicOn(!isMicOn);
+    if (isMicOn) {
+      setIsMicOn(false);
+      setIsListening(false);
+      if (recognitionRef.current) {
+        recognitionRef.current.stop();
+      }
+    } else {
+      setIsMicOn(true);
+      setIsListening(true);
+      if (recognitionRef.current) {
+        recognitionRef.current.start();
+      }
+    }
   };
 
   const toggleVideo = () => {
-    setIsVideoOn(!isVideoOn);
+    if (videoRef.current && videoRef.current.srcObject) {
+      const tracks = (videoRef.current.srcObject as MediaStream).getVideoTracks();
+      tracks.forEach(track => track.enabled = !isVideoOn);
+      setIsVideoOn(!isVideoOn);
+    }
   };
 
   const handleSubmit = async (e?: React.FormEvent) => {
@@ -122,12 +183,18 @@ export default function Interview() {
     const userMessage: Message = {
       id: Date.now().toString(),
       role: "user",
-      content: input,
+      content: input.trim(),
     };
 
     setMessages((prev) => [...prev, userMessage]);
     setInput("");
     setIsLoading(true);
+
+    // Stop listening while processing
+    if (recognitionRef.current && isListening) {
+      recognitionRef.current.stop();
+      setIsListening(false);
+    }
 
     // Simulate AI response with feedback
     setTimeout(() => {
@@ -145,6 +212,13 @@ export default function Interview() {
 
       setMessages((prev) => [...prev, feedback]);
 
+      // Speak feedback for voice/video modes
+      if ((mode === "voice" || mode === "video") && 'speechSynthesis' in window) {
+        const utterance = new SpeechSynthesisUtterance(generateFeedback(score));
+        utterance.rate = 0.9;
+        speechSynthesis.speak(utterance);
+      }
+
       // Add next question if available
       if (currentQuestionIndex < sampleQuestions.length - 1) {
         setTimeout(() => {
@@ -155,7 +229,14 @@ export default function Interview() {
           };
           setMessages((prev) => [...prev, nextQuestion]);
           setCurrentQuestionIndex((prev) => prev + 1);
-        }, 1500);
+
+          // Speak next question
+          if ((mode === "voice" || mode === "video") && 'speechSynthesis' in window) {
+            const utterance = new SpeechSynthesisUtterance(sampleQuestions[currentQuestionIndex + 1]);
+            utterance.rate = 0.9;
+            speechSynthesis.speak(utterance);
+          }
+        }, 2000);
       } else {
         // Interview complete
         setTimeout(() => {
@@ -165,7 +246,7 @@ export default function Interview() {
             content: "🎉 Congratulations! You've completed this interview session. Check your analytics dashboard for detailed insights.",
           };
           setMessages((prev) => [...prev, completion]);
-        }, 1500);
+        }, 2000);
       }
 
       setIsLoading(false);
@@ -179,46 +260,71 @@ export default function Interview() {
     return "There's room for improvement. Focus on structuring your answer with clear examples.";
   };
 
-  const getModeIcon = () => {
+  const getModeConfig = () => {
     switch (mode) {
-      case "voice": return Mic;
-      case "video": return Video;
-      default: return Sparkles;
+      case "voice": 
+        return { 
+          icon: Mic, 
+          gradient: "from-orange-400 to-rose-500",
+          bgGradient: "from-orange-400/20 to-rose-500/20"
+        };
+      case "video": 
+        return { 
+          icon: Video, 
+          gradient: "from-violet-400 to-purple-500",
+          bgGradient: "from-violet-400/20 to-purple-500/20"
+        };
+      default: 
+        return { 
+          icon: MessageSquare, 
+          gradient: "from-cyan-400 to-teal-500",
+          bgGradient: "from-cyan-400/20 to-teal-500/20"
+        };
     }
   };
 
-  const ModeIcon = getModeIcon();
+  const modeConfig = getModeConfig();
+  const ModeIcon = modeConfig.icon;
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
+      {/* Background Effects */}
+      <div className="fixed inset-0 bg-mesh pointer-events-none" />
+
       {/* Header */}
-      <header className="sticky top-0 z-50 bg-background/80 backdrop-blur-xl border-b border-border/50">
+      <header className="sticky top-0 z-50 bg-background/60 backdrop-blur-2xl border-b border-border/30">
         <div className="container mx-auto px-4 h-16 flex items-center justify-between">
           <div className="flex items-center gap-4">
-            <Link to="/dashboard" className="p-2 rounded-lg hover:bg-secondary/50 transition-colors">
+            <Link to="/dashboard" className="p-2 rounded-xl hover:bg-secondary/50 transition-colors">
               <ArrowLeft className="w-5 h-5" />
             </Link>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-3">
               <div className={cn(
-                "w-8 h-8 rounded-lg flex items-center justify-center",
-                mode === "text" && "bg-blue-500/20 text-blue-500",
-                mode === "voice" && "bg-orange-500/20 text-orange-500",
-                mode === "video" && "bg-purple-500/20 text-purple-500"
+                "w-10 h-10 rounded-xl bg-gradient-to-br flex items-center justify-center",
+                modeConfig.gradient
               )}>
-                <ModeIcon className="w-4 h-4" />
+                <ModeIcon className="w-5 h-5 text-white" />
               </div>
-              <span className="font-semibold capitalize">{mode} Interview</span>
+              <div>
+                <span className="font-display font-bold capitalize">{mode} Interview</span>
+                {isListening && (
+                  <div className="flex items-center gap-1 text-xs text-primary">
+                    <span className="w-2 h-2 bg-primary rounded-full animate-pulse" />
+                    Listening...
+                  </div>
+                )}
+              </div>
             </div>
           </div>
 
           <div className="flex items-center gap-4">
             {interviewStarted && (
-              <div className="flex items-center gap-2 text-muted-foreground">
+              <div className="flex items-center gap-2 text-muted-foreground bg-secondary/50 px-3 py-1.5 rounded-xl">
                 <Clock className="w-4 h-4" />
-                <span className="font-mono">{formatTime(timeElapsed)}</span>
+                <span className="font-mono font-medium">{formatTime(timeElapsed)}</span>
               </div>
             )}
-            <div className="flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 text-primary text-sm">
+            <div className="flex items-center gap-2 px-4 py-2 rounded-xl bg-primary/10 border border-primary/30 text-primary text-sm font-medium">
               <BarChart3 className="w-4 h-4" />
               <span>Q{currentQuestionIndex + 1}/{sampleQuestions.length}</span>
             </div>
@@ -227,29 +333,27 @@ export default function Interview() {
       </header>
 
       {/* Main Content */}
-      <main className="flex-1 container mx-auto px-4 py-6 flex gap-6">
+      <main className="flex-1 container mx-auto px-4 py-6 flex gap-6 relative z-10">
         {/* Chat Area */}
         <div className="flex-1 flex flex-col">
           {!interviewStarted ? (
             // Start Screen
             <div className="flex-1 flex items-center justify-center">
-              <div className="text-center max-w-md">
+              <div className="text-center max-w-lg">
                 <div className={cn(
-                  "w-20 h-20 mx-auto mb-6 rounded-2xl flex items-center justify-center animate-float",
-                  mode === "text" && "bg-gradient-to-br from-blue-500 to-cyan-500",
-                  mode === "voice" && "bg-gradient-to-br from-orange-500 to-red-500",
-                  mode === "video" && "bg-gradient-to-br from-purple-500 to-pink-500"
+                  "w-24 h-24 mx-auto mb-8 rounded-3xl bg-gradient-to-br flex items-center justify-center animate-float neon-glow",
+                  modeConfig.gradient
                 )}>
-                  <ModeIcon className="w-10 h-10 text-white" />
+                  <ModeIcon className="w-12 h-12 text-white" />
                 </div>
-                <h2 className="text-2xl font-bold mb-4">Ready for your {mode} interview?</h2>
-                <p className="text-muted-foreground mb-8">
-                  {mode === "text" && "Type your responses to practice articulating your answers clearly."}
-                  {mode === "voice" && "Speak your answers and get feedback on your communication skills."}
-                  {mode === "video" && "Full video simulation with body language and presentation tips."}
+                <h2 className="font-display text-3xl font-bold mb-4">Ready for your {mode} interview?</h2>
+                <p className="text-muted-foreground text-lg mb-8">
+                  {mode === "text" && "Type your responses to practice articulating your answers clearly and professionally."}
+                  {mode === "voice" && "Speak your answers naturally and get AI feedback on your communication and confidence."}
+                  {mode === "video" && "Full video simulation with body language analysis and presentation tips."}
                 </p>
-                <Button variant="hero" size="xl" onClick={startInterview}>
-                  <ModeIcon className="w-5 h-5 mr-2" />
+                <Button variant="hero" size="xl" onClick={startInterview} className="neon-glow">
+                  <Zap className="w-5 h-5 mr-2" />
                   Start Interview
                 </Button>
               </div>
@@ -257,25 +361,25 @@ export default function Interview() {
           ) : (
             // Chat Interface
             <>
-              <div className="flex-1 overflow-y-auto space-y-4 mb-4">
+              <div className="flex-1 overflow-y-auto space-y-5 mb-4">
                 {messages.map((message) => (
                   <div
                     key={message.id}
                     className={cn(
-                      "flex gap-3 animate-fade-in",
+                      "flex gap-4 animate-fade-in",
                       message.role === "user" && "flex-row-reverse"
                     )}
                   >
                     <div className={cn(
-                      "w-8 h-8 rounded-lg flex items-center justify-center shrink-0",
+                      "w-10 h-10 rounded-xl flex items-center justify-center shrink-0",
                       message.role === "ai" 
                         ? "bg-gradient-to-br from-primary to-accent" 
-                        : "bg-secondary"
+                        : "bg-gradient-to-br from-secondary to-muted"
                     )}>
                       {message.role === "ai" ? (
-                        <Brain className="w-4 h-4 text-primary-foreground" />
+                        <Brain className="w-5 h-5 text-primary-foreground" />
                       ) : (
-                        <span className="text-sm font-medium">You</span>
+                        <span className="text-sm font-bold">You</span>
                       )}
                     </div>
                     <div className={cn(
@@ -283,24 +387,24 @@ export default function Interview() {
                       message.role === "user" && "flex flex-col items-end"
                     )}>
                       <div className={cn(
-                        "glass-card p-4 rounded-2xl",
-                        message.role === "user" && "bg-primary/10"
+                        "glass-card p-5 rounded-2xl",
+                        message.role === "user" && "bg-primary/10 border-primary/30"
                       )}>
-                        <p className="whitespace-pre-wrap">{message.content}</p>
+                        <p className="whitespace-pre-wrap leading-relaxed">{message.content}</p>
                       </div>
                       
                       {message.feedback && (
-                        <div className="mt-3 glass-card p-4 rounded-xl">
-                          <div className="flex items-center gap-2 mb-3">
+                        <div className="mt-4 glass-card p-5 rounded-2xl border-primary/20">
+                          <div className="flex items-center gap-3 mb-4">
                             <div className={cn(
-                              "text-2xl font-bold",
+                              "font-display text-3xl font-bold",
                               message.feedback.score >= 80 && "text-success",
                               message.feedback.score >= 60 && message.feedback.score < 80 && "text-warning",
                               message.feedback.score < 60 && "text-destructive"
                             )}>
                               {message.feedback.score}%
                             </div>
-                            <span className="text-sm text-muted-foreground">Score</span>
+                            <span className="text-sm text-muted-foreground">Your Score</span>
                           </div>
                           <div className="space-y-2 text-sm">
                             {message.feedback.strengths.map((s, i) => (
@@ -323,13 +427,13 @@ export default function Interview() {
                 ))}
                 
                 {isLoading && (
-                  <div className="flex gap-3 animate-fade-in">
-                    <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-primary to-accent flex items-center justify-center">
-                      <Brain className="w-4 h-4 text-primary-foreground" />
+                  <div className="flex gap-4 animate-fade-in">
+                    <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary to-accent flex items-center justify-center">
+                      <Brain className="w-5 h-5 text-primary-foreground" />
                     </div>
-                    <div className="glass-card p-4 rounded-2xl">
-                      <div className="flex items-center gap-2">
-                        <Loader2 className="w-4 h-4 animate-spin" />
+                    <div className="glass-card p-5 rounded-2xl">
+                      <div className="flex items-center gap-3">
+                        <Loader2 className="w-5 h-5 animate-spin text-primary" />
                         <span className="text-muted-foreground">Analyzing your response...</span>
                       </div>
                     </div>
@@ -340,12 +444,12 @@ export default function Interview() {
               </div>
 
               {/* Input Area */}
-              <form onSubmit={handleSubmit} className="glass-card p-4 rounded-xl">
+              <form onSubmit={handleSubmit} className="glass-card p-5 rounded-2xl">
                 <Textarea
                   value={input}
                   onChange={(e) => setInput(e.target.value)}
-                  placeholder="Type your answer here..."
-                  className="min-h-[100px] resize-none border-0 bg-transparent focus-visible:ring-0 p-0"
+                  placeholder={mode === "text" ? "Type your answer here..." : "Your speech will appear here, or type manually..."}
+                  className="min-h-[100px] resize-none border-0 bg-transparent focus-visible:ring-0 p-0 text-base"
                   onKeyDown={(e) => {
                     if (e.key === "Enter" && !e.shiftKey) {
                       e.preventDefault();
@@ -361,6 +465,10 @@ export default function Interview() {
                         variant={isMicOn ? "default" : "outline"}
                         size="icon"
                         onClick={toggleMic}
+                        className={cn(
+                          "rounded-xl transition-all",
+                          isMicOn && "bg-primary animate-pulse-glow"
+                        )}
                       >
                         {isMicOn ? <Mic className="w-4 h-4" /> : <MicOff className="w-4 h-4" />}
                       </Button>
@@ -371,12 +479,13 @@ export default function Interview() {
                         variant={isVideoOn ? "default" : "outline"}
                         size="icon"
                         onClick={toggleVideo}
+                        className="rounded-xl"
                       >
                         {isVideoOn ? <Video className="w-4 h-4" /> : <VideoOff className="w-4 h-4" />}
                       </Button>
                     )}
                   </div>
-                  <Button type="submit" variant="hero" disabled={!input.trim() || isLoading}>
+                  <Button type="submit" variant="hero" disabled={!input.trim() || isLoading} className="rounded-xl">
                     <Send className="w-4 h-4 mr-2" />
                     Send Answer
                   </Button>
@@ -389,9 +498,9 @@ export default function Interview() {
         {/* Video Preview (for video mode) */}
         {mode === "video" && interviewStarted && (
           <div className="w-80 shrink-0">
-            <div className="glass-card p-4 rounded-xl sticky top-24">
-              <h3 className="text-sm font-medium mb-3">Your Camera</h3>
-              <div className="aspect-video bg-secondary/50 rounded-lg overflow-hidden mb-3">
+            <div className="glass-card p-5 rounded-2xl sticky top-24">
+              <h3 className="font-display text-sm font-semibold mb-4">Your Camera</h3>
+              <div className="aspect-video bg-secondary/30 rounded-xl overflow-hidden mb-4">
                 <video
                   ref={videoRef}
                   autoPlay
@@ -404,7 +513,7 @@ export default function Interview() {
                 <Button
                   variant={isMicOn ? "default" : "outline"}
                   size="sm"
-                  className="flex-1"
+                  className="flex-1 rounded-xl"
                   onClick={toggleMic}
                 >
                   {isMicOn ? <Mic className="w-4 h-4 mr-1" /> : <MicOff className="w-4 h-4 mr-1" />}
@@ -413,7 +522,7 @@ export default function Interview() {
                 <Button
                   variant={isVideoOn ? "default" : "outline"}
                   size="sm"
-                  className="flex-1"
+                  className="flex-1 rounded-xl"
                   onClick={toggleVideo}
                 >
                   {isVideoOn ? <Video className="w-4 h-4 mr-1" /> : <VideoOff className="w-4 h-4 mr-1" />}
