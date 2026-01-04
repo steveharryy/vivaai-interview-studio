@@ -23,12 +23,14 @@ import {
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
 import { evaluateAnswer, type EvaluationResponse } from "@/lib/evaluateAnswer";
+import { getNextQuestion, type AdaptiveResponse } from "@/lib/adaptiveInterview";
 
 interface Message {
   id: string;
   role: "ai" | "user";
   content: string;
   evaluation?: EvaluationResponse;
+  adaptiveInfo?: AdaptiveResponse;
   feedback?: {
     score: number;
     strengths: string[];
@@ -36,13 +38,8 @@ interface Message {
   };
 }
 
-const sampleQuestions = [
-  "Tell me about yourself and your background.",
-  "What are your greatest strengths?",
-  "Describe a challenging project you've worked on.",
-  "How do you handle conflict in a team?",
-  "Where do you see yourself in 5 years?",
-];
+// Initial question to start the interview
+const initialQuestion = "Tell me about yourself and your background.";
 
 export default function Interview() {
   const { mode } = useParams<{ mode: string }>();
@@ -53,10 +50,15 @@ export default function Interview() {
   const [isLoading, setIsLoading] = useState(false);
   const [isMicOn, setIsMicOn] = useState(false);
   const [isVideoOn, setIsVideoOn] = useState(false);
-  const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
+  const [questionCount, setQuestionCount] = useState(0);
+  const [currentDifficulty, setCurrentDifficulty] = useState<"easy" | "medium" | "hard">("easy");
+  const [currentQuestion, setCurrentQuestion] = useState(initialQuestion);
   const [interviewStarted, setInterviewStarted] = useState(false);
   const [timeElapsed, setTimeElapsed] = useState(0);
   const [isListening, setIsListening] = useState(false);
+  const [lastEvaluation, setLastEvaluation] = useState<EvaluationResponse | null>(null);
+  
+  const MAX_QUESTIONS = 5;
   
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -119,12 +121,14 @@ export default function Interview() {
 
   const startInterview = () => {
     setInterviewStarted(true);
+    setQuestionCount(1);
     const firstQuestion: Message = {
       id: Date.now().toString(),
       role: "ai",
-      content: sampleQuestions[0],
+      content: initialQuestion,
     };
     setMessages([firstQuestion]);
+    setCurrentQuestion(initialQuestion);
     
     if (mode === "video") {
       startVideo();
@@ -132,7 +136,7 @@ export default function Interview() {
 
     // Speak the first question
     if ((mode === "voice" || mode === "video") && 'speechSynthesis' in window) {
-      const utterance = new SpeechSynthesisUtterance(sampleQuestions[0]);
+      const utterance = new SpeechSynthesisUtterance(initialQuestion);
       utterance.rate = 0.9;
       speechSynthesis.speak(utterance);
     }
@@ -204,11 +208,12 @@ export default function Interview() {
       // Call the real AI evaluation endpoint
       const evaluation = await evaluateAnswer({
         interviewType: `${mode} interview`,
-        currentQuestion: sampleQuestions[currentQuestionIndex],
+        currentQuestion: currentQuestion,
         candidateAnswer: currentAnswer,
       });
 
       console.log('AI Evaluation:', evaluation);
+      setLastEvaluation(evaluation);
 
       // Generate feedback based on AI evaluation
       const getStrengths = (eval_: EvaluationResponse): string[] => {
@@ -250,24 +255,50 @@ export default function Interview() {
         speechSynthesis.speak(utterance);
       }
 
-      // Add next question if available
-      if (currentQuestionIndex < sampleQuestions.length - 1) {
-        setTimeout(() => {
-          const nextQuestion: Message = {
-            id: (Date.now() + 2).toString(),
-            role: "ai",
-            content: sampleQuestions[currentQuestionIndex + 1],
-          };
-          setMessages((prev) => [...prev, nextQuestion]);
-          setCurrentQuestionIndex((prev) => prev + 1);
+      // Get next adaptive question if we haven't reached max questions
+      if (questionCount < MAX_QUESTIONS) {
+        try {
+          const adaptiveResponse = await getNextQuestion({
+            interviewType: `${mode} interview`,
+            currentDifficulty,
+            answerEvaluation: evaluation,
+          });
 
-          // Speak next question
-          if ((mode === "voice" || mode === "video") && 'speechSynthesis' in window) {
-            const utterance = new SpeechSynthesisUtterance(sampleQuestions[currentQuestionIndex + 1]);
-            utterance.rate = 0.9;
-            speechSynthesis.speak(utterance);
-          }
-        }, 2000);
+          console.log('Adaptive Response:', adaptiveResponse);
+
+          // Update difficulty for next question
+          setCurrentDifficulty(adaptiveResponse.nextDifficulty);
+          setCurrentQuestion(adaptiveResponse.nextQuestion);
+
+          setTimeout(() => {
+            const nextQuestionMessage: Message = {
+              id: (Date.now() + 2).toString(),
+              role: "ai",
+              content: adaptiveResponse.nextQuestion,
+              adaptiveInfo: adaptiveResponse,
+            };
+            setMessages((prev) => [...prev, nextQuestionMessage]);
+            setQuestionCount((prev) => prev + 1);
+
+            // Speak next question
+            if ((mode === "voice" || mode === "video") && 'speechSynthesis' in window) {
+              const utterance = new SpeechSynthesisUtterance(adaptiveResponse.nextQuestion);
+              utterance.rate = 0.9;
+              speechSynthesis.speak(utterance);
+            }
+          }, 2000);
+        } catch (nextError) {
+          console.error('Error getting next question:', nextError);
+          // Fallback: end interview if we can't get next question
+          setTimeout(() => {
+            const completion: Message = {
+              id: (Date.now() + 2).toString(),
+              role: "ai",
+              content: "🎉 Great session! You've completed the interview. Check your analytics for insights.",
+            };
+            setMessages((prev) => [...prev, completion]);
+          }, 2000);
+        }
       } else {
         // Interview complete
         setTimeout(() => {
@@ -364,7 +395,8 @@ export default function Interview() {
             )}
             <div className="flex items-center gap-2 px-4 py-2 rounded-xl bg-primary/10 border border-primary/30 text-primary text-sm font-medium">
               <BarChart3 className="w-4 h-4" />
-              <span>Q{currentQuestionIndex + 1}/{sampleQuestions.length}</span>
+              <span>Q{questionCount}/{MAX_QUESTIONS}</span>
+              <span className="text-xs opacity-70 capitalize">({currentDifficulty})</span>
             </div>
           </div>
         </div>
