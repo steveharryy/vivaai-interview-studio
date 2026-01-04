@@ -8,6 +8,7 @@ import {
   Target,
   BarChart3
 } from "lucide-react";
+import { motion } from "framer-motion";
 
 const features = [
   {
@@ -52,6 +53,46 @@ const features = [
   },
 ];
 
+const headerVariants = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: {
+      staggerChildren: 0.1
+    }
+  }
+};
+
+const fadeInUp = {
+  hidden: { opacity: 0, y: 20 },
+  visible: { 
+    opacity: 1, 
+    y: 0,
+    transition: { duration: 0.5, ease: [0.25, 0.46, 0.45, 0.94] as const }
+  }
+};
+
+const gridVariants = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: {
+      staggerChildren: 0.08,
+      delayChildren: 0.3
+    }
+  }
+};
+
+const cardVariants = {
+  hidden: { opacity: 0, y: 30, scale: 0.95 },
+  visible: { 
+    opacity: 1, 
+    y: 0, 
+    scale: 1,
+    transition: { duration: 0.4, ease: [0.25, 0.46, 0.45, 0.94] as const }
+  }
+};
+
 export function FeaturesSection() {
   return (
     <section className="py-24 relative">
@@ -60,32 +101,45 @@ export function FeaturesSection() {
 
       <div className="container mx-auto px-4 relative z-10">
         {/* Header */}
-        <div className="max-w-2xl mb-16">
-          <p className="tag mb-4 animate-fade-in-up">Features</p>
-          <h2 
-            className="text-3xl sm:text-4xl lg:text-5xl font-medium leading-tight animate-fade-in-up"
-            style={{ animationDelay: "0.1s" }}
+        <motion.div 
+          className="max-w-2xl mb-16"
+          variants={headerVariants}
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true, margin: "-100px" }}
+        >
+          <motion.p className="tag mb-4" variants={fadeInUp}>Features</motion.p>
+          <motion.h2 
+            className="text-3xl sm:text-4xl lg:text-5xl font-medium leading-tight"
+            variants={fadeInUp}
           >
             Everything you need to{" "}
             <span className="font-editorial italic text-primary">nail the interview</span>
-          </h2>
-          <p 
-            className="mt-4 text-muted-foreground text-lg animate-fade-in-up"
-            style={{ animationDelay: "0.2s" }}
+          </motion.h2>
+          <motion.p 
+            className="mt-4 text-muted-foreground text-lg"
+            variants={fadeInUp}
           >
             Built by people who've been through hundreds of interviews. We know what actually helps.
-          </p>
-        </div>
+          </motion.p>
+        </motion.div>
 
         {/* Features grid - asymmetric */}
-        <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <motion.div 
+          className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4"
+          variants={gridVariants}
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true, margin: "-50px" }}
+        >
           {features.map((feature, index) => (
-            <div
+            <motion.div
               key={feature.title}
-              className={`feature-card animate-fade-in-up ${
+              className={`feature-card ${
                 index === 0 || index === 5 ? 'sm:col-span-2 lg:col-span-2' : ''
               }`}
-              style={{ animationDelay: `${0.1 + index * 0.05}s` }}
+              variants={cardVariants}
+              whileHover={{ y: -4, transition: { duration: 0.2 } }}
             >
               <div className="flex items-start gap-4">
                 <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
@@ -98,9 +152,9 @@ export function FeaturesSection() {
                   </p>
                 </div>
               </div>
-            </div>
+            </motion.div>
           ))}
-        </div>
+        </motion.div>
       </div>
     </section>
   );
