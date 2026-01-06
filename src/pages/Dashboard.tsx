@@ -16,9 +16,11 @@ import {
   Settings,
   Zap,
   Target,
-  Rocket
+  Rocket,
+  Eye
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { InterviewDetailsDialog } from "@/components/dashboard/InterviewDetailsDialog";
 
 const interviewModes = [
   {
@@ -50,14 +52,61 @@ const interviewModes = [
   },
 ];
 
-const recentInterviews = [
-  { id: 1, type: "text", role: "Software Engineer", score: 85, date: "2 hours ago" },
-  { id: 2, type: "voice", role: "Product Manager", score: 78, date: "Yesterday" },
-  { id: 3, type: "text", role: "Data Analyst", score: 92, date: "3 days ago" },
+const recentInterviews: Array<{
+  id: number;
+  type: "text" | "voice" | "video";
+  role: string;
+  score: number;
+  date: string;
+  duration?: string;
+  questionsAnswered?: number;
+  strengths?: string[];
+  improvements?: string[];
+}> = [
+  { 
+    id: 1, 
+    type: "text", 
+    role: "Software Engineer", 
+    score: 85, 
+    date: "2 hours ago",
+    duration: "18 min",
+    questionsAnswered: 10,
+    strengths: ["Technical accuracy", "Problem-solving approach", "Clear explanations"],
+    improvements: ["Add more examples", "Mention specific technologies", "Quantify achievements"]
+  },
+  { 
+    id: 2, 
+    type: "voice", 
+    role: "Product Manager", 
+    score: 78, 
+    date: "Yesterday",
+    duration: "22 min",
+    questionsAnswered: 8,
+    strengths: ["Strategic thinking", "User focus", "Communication clarity"],
+    improvements: ["Reduce filler words", "Be more concise", "Add metrics"]
+  },
+  { 
+    id: 3, 
+    type: "text", 
+    role: "Data Analyst", 
+    score: 92, 
+    date: "3 days ago",
+    duration: "15 min",
+    questionsAnswered: 9,
+    strengths: ["Analytical depth", "Tool expertise", "Clear methodology"],
+    improvements: ["Speak to business impact", "Simplify for non-technical audience"]
+  },
 ];
 
 export default function Dashboard() {
   const [selectedMode, setSelectedMode] = useState<string | null>(null);
+  const [selectedInterview, setSelectedInterview] = useState<typeof recentInterviews[0] | null>(null);
+  const [detailsOpen, setDetailsOpen] = useState(false);
+
+  const handleViewDetails = (interview: typeof recentInterviews[0]) => {
+    setSelectedInterview(interview);
+    setDetailsOpen(true);
+  };
 
   return (
     <div className="min-h-screen bg-background">
@@ -195,7 +244,7 @@ export default function Dashboard() {
                       <div className="text-sm text-muted-foreground">{interview.date}</div>
                     </div>
                   </div>
-                  <div className="flex items-center gap-4">
+                  <div className="flex items-center gap-3">
                     <div className={cn(
                       "font-display text-xl font-bold",
                       interview.score >= 90 && "text-success",
@@ -204,7 +253,13 @@ export default function Dashboard() {
                     )}>
                       {interview.score}%
                     </div>
-                    <Button variant="ghost" size="sm" className="rounded-xl">
+                    <Button 
+                      variant="ghost" 
+                      size="sm" 
+                      className="rounded-xl hover:bg-primary/10 hover:text-primary"
+                      onClick={() => handleViewDetails(interview)}
+                    >
+                      <Eye className="w-4 h-4 mr-1.5" />
                       View Details
                     </Button>
                   </div>
@@ -213,6 +268,13 @@ export default function Dashboard() {
             </div>
           </div>
         </div>
+
+        {/* Interview Details Dialog */}
+        <InterviewDetailsDialog 
+          interview={selectedInterview}
+          open={detailsOpen}
+          onOpenChange={setDetailsOpen}
+        />
       </main>
     </div>
   );
